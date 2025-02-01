@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Growth Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #1a365d;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .results-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .result-card.balance {
+            background-color: #eef2ff;
+        }
+
+        .result-card.contributions {
+            background-color: #f0fdf4;
+        }
+
+        .result-card.gains {
+            background-color: #faf5ff;
+        }
+
+        .result-label {
+            color: #4a5568;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            color: #1a365d;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Investment Growth Calculator</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <label for="initialAmount">Monthly Investment ($)</label>
+                <input type="number" id="initialAmount" value="500" min="0">
+            </div>
+            <div class="input-group">
+                <label for="returnRate">Annual Return Rate (%)</label>
+                <input type="number" id="returnRate" value="8" min="0" max="100" step="0.1">
+            </div>
+            <div class="input-group">
+                <label for="contributionIncrease">Annual Contribution Increase (%)</label>
+                <input type="number" id="contributionIncrease" value="5" min="0" max="100" step="0.1">
+            </div>
+            <div class="input-group">
+                <label for="years">Investment Period (Years)</label>
+                <input type="number" id="years" value="20" min="1" max="50">
+            </div>
+            <div class="input-group">
+                <label>&nbsp;</label>
+                <button onclick="calculateAndDisplay()">Calculate</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="result-card balance">
+                <div class="result-label">Final Balance</div>
+                <div class="result-value" id="finalBalance">$0</div>
+            </div>
+            <div class="result-card contributions">
+                <div class="result-label">Total Contributions</div>
+                <div class="result-value" id="totalContributions">$0</div>
+            </div>
+            <div class="result-card gains">
+                <div class="result-label">Investment Gains</div>
+                <div class="result-value" id="totalGains">$0</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="growthChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let growthChart;
+
+        function calculateGrowth() {
+            const monthlyContributionStart = parseFloat(document.getElementById('initialAmount').value);
+            const annualReturnRate = parseFloat(document.getElementById('returnRate').value) / 100;
+            const contributionIncrease = parseFloat(document.getElementById('contributionIncrease').value) / 100;
+            const years = parseInt(document.getElementById('years').value);
+            
+            const monthlyRate = annualReturnRate / 12;
+            let monthlyContribution = monthlyContributionStart;
+            let balance = 0;
+            let totalContributions = 0;
+            
+            const data = [];
+            
+            for (let year = 0; year <= years; year++) {
+                let yearlyBalance = balance;
+                let yearlyContribution = 0;
+                
+                for (let month = 0; month < 12; month++) {
+                    yearlyBalance = (yearlyBalance + monthlyContribution) * (1 + monthlyRate);
+                    yearlyContribution += monthlyContribution;
+                }
+                
+                balance = yearlyBalance;
+                totalContributions += yearlyContribution;
+                
+                data.push({
+                    year: 2024 + year,
+                    balance: Math.round(yearlyBalance),
+                    contributions: Math.round(totalContributions)
+                });
+                
+                monthlyContribution *= (1 + contributionIncrease);
+            }
+            
+            return data;
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function calculateAndDisplay() {
+            const data = calculateGrowth();
+            const finalData = data[data.length - 1];
+            
+            document.getElementById('finalBalance').textContent = formatCurrency(finalData.balance);
+            document.getElementById('totalContributions').textContent = formatCurrency(finalData.contributions);
+            document.getElementById('totalGains').textContent = formatCurrency(finalData.balance - finalData.contributions);
+            
+            updateChart(data);
+        }
+
+        function updateChart(data) {
+            if (growthChart) {
+                growthChart.destroy();
+            }
+            
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            growthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.year),
+                    datasets: [{
+                        label: 'Total Balance',
+                        data: data.map(d => d.balance),
+                        borderColor: '#2563eb',
+                        backgroundColor: '#eef2ff',
+                        fill: false,
+                        tension: 0.1
+                    }, {
+                        label: 'Total Contributions',
+                        data: data.map(d => d.contributions),
+                        borderColor: '#16a34a',
+                        backgroundColor: '#f0fdf4',
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initial calculation
+        calculateAndDisplay();
+    </script>
+</body>
+</html>
